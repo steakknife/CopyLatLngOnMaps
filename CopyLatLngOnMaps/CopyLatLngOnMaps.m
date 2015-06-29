@@ -29,11 +29,13 @@
         static NSRegularExpression *regex = nil;
         if (!regex) {
             NSError *error = nil;
-            regex = [NSRegularExpression regularExpressionWithPattern:@"(q|h?near)=(-?\\d+\\.\\d+,-?\\d+\\.\\d+)" options:0 error:&error];
+            regex = [NSRegularExpression regularExpressionWithPattern:@"(q|h?near|sll)=(-?\\d+\\.\\d+,-?\\d+\\.\\d+)" options:0 error:&error];
             if (error) {
                 NSLog(@"NSRegularExpression regularExpressionWithPattern:options:error:%@", error);
             }
         }
+
+		NSLog(@"processing query: %@", query);
         
         // Search latitude,longitude from query
         __block NSString *latlng = nil;
@@ -46,14 +48,22 @@
                     // Use parameter "q" as latlng if it's formated in "lat,lng".
                     latlng = [query substringWithRange:[result rangeAtIndex:2]];
                     *stop = YES;
+					NSLog(@"found latlng %@", latlng);
                 } else if ([paramName hasSuffix:@"near"]) {
                     // Use near as candidate if it's formated in "lat,lng".
                     candidate = [query substringWithRange:[result rangeAtIndex:2]];
-                }
+					NSLog(@"found another latlng candidate %@", latlng);
+				} else if ([paramName isEqualToString:@"sll"]) {
+					candidate = [query substringWithRange:[result rangeAtIndex:2]];
+					NSLog(@"found another latlng candidate for point of interest %@", latlng);
+				} else {
+					NSLog(@"skipping param (not latlng candidate) %@", paramName);
+				}
             }
         }];
+		NSLog(@"latlng was %@, candidate is %@", latlng, candidate);
         latlng =  latlng ?: candidate;
-        
+
         // Add custom service if found latitude,longitude
         if (latlng) {
             NSString *title = [NSString stringWithFormat:@"Copy \"%@\" to Pasteboard", latlng];
@@ -62,10 +72,15 @@
                 [pasteboard clearContents];
                 [pasteboard writeObjects:@[latlng]];
             }];
+			NSLog(@"new service for latlng %@ is %@", latlng, customService);
             services = [services arrayByAddingObject:@[customService]];
-        }
-    }
-    
+		} else {
+			NSLog(@"no latlng or candidate, so no sharing service");
+		}
+	} else {
+		NSLog(@"no latlang because of either: %@ != maps.apple.com OR '%@' is empty", url.host, query);
+	}
+
     return services;
 }
 
