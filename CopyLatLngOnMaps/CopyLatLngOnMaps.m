@@ -29,7 +29,7 @@
         static NSRegularExpression *regex = nil;
         if (!regex) {
             NSError *error = nil;
-            regex = [NSRegularExpression regularExpressionWithPattern:@"(q|h?near|sll)=(-?\\d+\\.\\d+,-?\\d+\\.\\d+)" options:0 error:&error];
+            regex = [NSRegularExpression regularExpressionWithPattern:@"(q|h?near|sll|ll)=(-?\\d+\\.\\d+,-?\\d+\\.\\d+)" options:0 error:&error];
             if (error) {
                 NSLog(@"NSRegularExpression regularExpressionWithPattern:options:error:%@", error);
             }
@@ -56,6 +56,9 @@
 				} else if ([paramName isEqualToString:@"sll"]) {
 					candidate = [query substringWithRange:[result rangeAtIndex:2]];
 					NSLog(@"found another latlng candidate for point of interest %@", latlng);
+				} else if ([paramName isEqualToString:@"ll"]) {
+					candidate = [query substringWithRange:[result rangeAtIndex:2]];
+					NSLog(@"found another latlng candidate for center of map %@", latlng);
 				} else {
 					NSLog(@"skipping param (not latlng candidate) %@", paramName);
 				}
